@@ -13,6 +13,10 @@
     <!-- Visualization & Content Choices: Report Info: Expense items -> Goal: Organize/Collect -> Presentation: Interactive HTML Table -> Interaction: Add/Delete rows via JS, real-time sum calculation, and a new LLM-powered feature to parse natural language descriptions into table rows -> Justification: A table is the most intuitive way to present itemized data. Dynamic rows and auto-calculation are significant usability improvements over a static form, and the LLM feature adds a powerful, time-saving "magic" element. Library/Method: Vanilla JS for all interactions and Gemini API for the LLM feature. Report Info: Total sum -> Goal: Inform -> Presentation: Read-only display field -> Interaction: Updates automatically -> Justification: Provides immediate, error-free feedback to the user. Library/Method: Vanilla JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -57,12 +61,20 @@
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+                height: 29.7cm;
+                width: 21cm;
+                margin: 0;
+                padding: 1cm;
             }
             .print-container {
                 box-shadow: none;
                 border: none;
                 margin: 0;
                 padding: 0;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
             }
         }
     </style>
@@ -91,7 +103,7 @@
                             </div>
                             <div>
                                 <label for="address" class="block text-sm font-medium text-gray-700">Anschrift</label>
-                                <input type="text" id="address" class="form-input mt-1">
+                                <textarea id="address" class="form-input mt-1 resize-y min-h-[50px]"></textarea>
                             </div>
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-700">Datum</label>
@@ -143,7 +155,7 @@
                          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label for="iban" class="block text-sm font-medium text-gray-700">IBAN</label>
-                                <input type="text" id="iban" class="form-input mt-1">
+                                <input type="text" id="iban" class="form-input mt-1 w-full" maxlength="30" placeholder="DE00 0000 0000 0000 0000 00">
                             </div>
                             <div>
                                 <label for="bank-name" class="block text-sm font-medium text-gray-700">Name der Bank</label>
@@ -218,6 +230,8 @@
             const loadingSpinner = document.getElementById('loading-spinner');
             const generateBtnText = document.getElementById('generate-btn-text');
 
+            const ibanInput = document.getElementById('iban');
+
             dateInput.valueAsDate = new Date();
 
             const createRow = (data = {}) => {
@@ -248,6 +262,12 @@
 
                 return row;
             };
+
+            ibanInput.addEventListener('input', (e) => {
+                const value = e.target.value.replace(/\s/g, '');
+                const formattedValue = value.replace(/(.{4})/g, '$1 ').trim();
+                e.target.value = formattedValue.toUpperCase();
+            });
             
             const calculateTotal = () => {
                 let total = 0;
