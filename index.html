@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chosen Palette: Modern Indigo -->
     <!-- Application Structure Plan: A task-oriented, single-page form application. The structure guides the user logically from personal details to itemized expenses, with dynamic table rows for easy entry. An automatically calculated total provides immediate feedback. The final step is a clear call-to-action to print the form. This structure was chosen to streamline the data entry process, minimize user error by automating calculations, and provide a clean, print-ready output, directly addressing the core task of submitting an expense claim efficiently. -->
-    <!-- Visualization & Content Choices: Report Info: Expense items -> Goal: Organize/Collect -> Presentation: Interactive HTML Table -> Interaction: Add/Delete rows via JS, real-time sum calculation, and a new LLM-powered feature to parse natural language descriptions into table rows -> Justification: A table is the most intuitive way to present itemized data. Dynamic rows and auto-calculation are significant usability improvements over a static form, and the LLM feature adds a powerful, time-saving "magic" element. Library/Method: Vanilla JS for all interactions and Gemini API for the LLM feature. Report Info: Total sum -> Goal: Inform -> Presentation: Read-only display field -> Interaction: Updates automatically -> Justification: Provides immediate, error-free feedback to the user. Library/Method: Vanilla JS. -->
+    <!-- Visualization & Content Choices: Report Info: Expense items -> Goal: Organize/Collect -> Presentation: Interactive HTML Table -> Interaction: Add/Delete rows via JS, real-time sum calculation -> Justification: A table is the most intuitive way to present itemized data. Dynamic rows and auto-calculation are significant usability improvements over a static form. Library/Method: Vanilla JS for all interactions. Report Info: Total sum -> Goal: Inform -> Presentation: Read-only display field -> Interaction: Updates automatically -> Justification: Provides immediate, error-free feedback to the user. Library/Method: Vanilla JS. -->
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
     <style>
         @page {
@@ -115,16 +115,10 @@
                     <section id="expense-items" class="mb-8">
                         <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b pb-2 mb-4">
                              <h2 class="text-lg font-semibold text-gray-700">Aufstellung deiner Ausgaben</h2>
-                             <div class="flex gap-2 mt-2 sm:mt-0 no-print">
-                                <button type="button" id="add-row" class="btn btn-primary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
-                                    Posten hinzufügen
-                                </button>
-                                <button type="button" id="generate-items" class="btn btn-secondary">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm-1.872 7.757l-1.414 1.414a1 1 0 000 1.414l2.121 2.121a1 1 0 001.414 0l1.414-1.414a1 1 0 000-1.414l-2.121-2.121a1 1 0 00-1.414 0zM10.707 6.293a1 1 0 00-1.414 0l-1.414 1.414a1 1 0 000 1.414l2.121 2.121a1 1 0 001.414 0l1.414-1.414a1 1 0 000-1.414l-2.121-2.121zM10 1a9 9 0 110 18 9 9 0 010-18zm-2.828 7.757l-1.414 1.414a1 1 0 000 1.414l2.121 2.121a1 1 0 001.414 0l1.414-1.414a1 1 0 000-1.414l-2.121-2.121a1 1 0 00-1.414 0z" /></svg>
-                                    Ausgaben generieren
-                                </button>
-                             </div>
+                             <button type="button" id="add-row" class="btn btn-primary mt-2 sm:mt-0 no-print">
+                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                                 Posten hinzufügen
+                             </button>
                         </div>
                         <p class="text-sm text-gray-500 mb-4 no-print">Füge hier alle Ausgaben hinzu. Die Gesamtsumme wird automatisch berechnet.</p>
                         <div class="overflow-x-auto">
@@ -192,26 +186,6 @@
         </div>
     </div>
 
-    <!-- Generieren Modal -->
-    <div id="generate-modal" class="modal">
-        <div class="modal-content">
-            <div class="flex justify-between items-center pb-3 border-b">
-                <h3 class="text-lg font-bold text-gray-900">Ausgaben automatisch generieren ✨</h3>
-                <span id="close-modal" class="text-xl font-bold text-gray-600 cursor-pointer hover:text-gray-900">&times;</span>
-            </div>
-            <div class="py-4">
-                <p class="text-sm text-gray-700 mb-4">Beschreibe deine Ausgaben einfach in einem Satz und ich fülle die Tabelle für dich aus. Zum Beispiel: "Ich habe 30,50€ für neue Lautsprecherkabel gekauft, 15€ für die Druckkosten der Flyer und 5€ für Briefmarken."</p>
-                <textarea id="prompt-textarea" rows="4" class="form-input" placeholder="Deine Ausgaben..."></textarea>
-            </div>
-            <div class="flex justify-end gap-2">
-                <button type="button" id="generate-submit" class="btn btn-primary">
-                    <span id="generate-btn-text">Generieren</span>
-                    <span id="loading-spinner" class="hidden animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full ml-2"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const expenseTableBody = document.getElementById('expense-table-body');
@@ -222,14 +196,6 @@
             const mainForm = document.getElementById('reimbursement-form');
             const dateInput = document.getElementById('date');
             
-            const generateButton = document.getElementById('generate-items');
-            const generateModal = document.getElementById('generate-modal');
-            const closeModalButton = document.getElementById('close-modal');
-            const promptTextarea = document.getElementById('prompt-textarea');
-            const generateSubmitButton = document.getElementById('generate-submit');
-            const loadingSpinner = document.getElementById('loading-spinner');
-            const generateBtnText = document.getElementById('generate-btn-text');
-
             const ibanInput = document.getElementById('iban');
 
             dateInput.valueAsDate = new Date();
@@ -313,105 +279,6 @@
                 expenseTableBody.appendChild(newRow);
                 dateInput.valueAsDate = new Date();
                 calculateTotal();
-            });
-
-            generateButton.addEventListener('click', () => {
-                generateModal.style.display = 'block';
-            });
-            
-            closeModalButton.addEventListener('click', () => {
-                generateModal.style.display = 'none';
-            });
-            
-            window.addEventListener('click', (event) => {
-                if (event.target == generateModal) {
-                    generateModal.style.display = 'none';
-                }
-            });
-
-            generateSubmitButton.addEventListener('click', async () => {
-                const userPrompt = promptTextarea.value.trim();
-                if (!userPrompt) {
-                    return;
-                }
-                
-                generateBtnText.textContent = 'Generiere...';
-                loadingSpinner.classList.remove('hidden');
-                generateSubmitButton.disabled = true;
-
-                let chatHistory = [];
-                chatHistory.push({ role: "user", parts: [{ text: `Extrahiere aus dem folgenden Text die Ausgaben. Gib das Ergebnis als JSON-Array von Objekten zurück. Jedes Objekt soll die Felder "beschreibung" (als String) und "betrag" (als Zahl) haben. Text: "${userPrompt}"` }] });
-                
-                const payload = {
-                    contents: chatHistory,
-                    generationConfig: {
-                        responseMimeType: "application/json",
-                        responseSchema: {
-                            type: "ARRAY",
-                            items: {
-                                type: "OBJECT",
-                                properties: {
-                                    "beschreibung": { "type": "STRING" },
-                                    "betrag": { "type": "NUMBER" }
-                                }
-                            }
-                        }
-                    }
-                };
-                
-                let retryCount = 0;
-                const maxRetries = 3;
-                let responseData;
-                let success = false;
-
-                while (retryCount < maxRetries && !success) {
-                    try {
-                        const apiKey = "";
-                        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-                        const response = await fetch(apiUrl, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (response.status === 429) {
-                            const delay = Math.pow(2, retryCount) * 1000;
-                            await new Promise(resolve => setTimeout(resolve, delay));
-                            retryCount++;
-                            continue;
-                        }
-                        if (!response.ok) {
-                            throw new Error(`API response was not ok: ${response.statusText}`);
-                        }
-                        responseData = await response.json();
-                        success = true;
-                    } catch (error) {
-                        retryCount++;
-                        if (retryCount >= maxRetries) {
-                            console.error('An error occurred while calling the API:', error);
-                            alert('Es gab ein Problem beim Generieren der Ausgaben. Bitte versuche es später noch einmal.');
-                        }
-                    }
-                }
-
-                generateBtnText.textContent = 'Generieren';
-                loadingSpinner.classList.add('hidden');
-                generateSubmitButton.disabled = false;
-                generateModal.style.display = 'none';
-
-                if (success && responseData.candidates && responseData.candidates.length > 0 && responseData.candidates[0].content && responseData.candidates[0].content.parts && responseData.candidates[0].content.parts.length > 0) {
-                    try {
-                        const jsonString = responseData.candidates[0].content.parts[0].text;
-                        const parsedData = JSON.parse(jsonString);
-                        appendRowsFromData(parsedData);
-                    } catch (e) {
-                        console.error('Failed to parse JSON from API:', e);
-                        alert('Die generierten Daten konnten nicht verarbeitet werden. Bitte versuche es mit einer anderen Beschreibung.');
-                    }
-                } else {
-                    alert('Es wurden keine Ausgaben gefunden. Versuche eine detailliertere Beschreibung.');
-                }
-                
-                promptTextarea.value = '';
             });
 
             const newRow = createRow();
