@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anforderungen zur Abnahme</title>
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #1d1d1d;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+        }
+
+        h1 {
+            color: #90caf9;
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.125rem;
+            color: #a0a0a0;
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        thead {
+            background-color: #2c2c2c;
+        }
+
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #90caf9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #424242;
+        }
+        
+        .table-group-header {
+            font-size: 1rem;
+            font-weight: 700;
+            background-color: #333;
+            color: #90caf9;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #424242;
+        }
+
+        tr:nth-child(even) {
+            background-color: #242424;
+        }
+        
+        tr:hover {
+            background-color: #333;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid #424242;
+            vertical-align: top;
+        }
+        
+        .checkbox-cell {
+            width: 50px;
+            text-align: center;
+        }
+
+        .title-cell {
+            font-weight: 600;
+            color: #e0e0e0;
+            width: 25%;
+        }
+
+        .description-cell {
+            font-size: 0.9rem;
+            color: #c0c0c0;
+            width: 50%;
+        }
+
+        .comment-cell {
+            width: 25%;
+        }
+
+        .priority {
+            font-size: 0.8rem;
+            color: #808080;
+            margin-top: 0.25rem;
+        }
+
+        input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            accent-color: #90caf9;
+            cursor: pointer;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 10rem; /* Vergrößerte Kommentarfelder */
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border: 1px solid #424242;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.9rem;
+            resize: vertical;
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #90caf9;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-button {
+            background-color: #90caf9;
+            color: #121212;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .action-button:hover {
+            background-color: #bbdefb;
+        }
+        
+        @media print {
+            body {
+                background-color: #fff;
+                color: #000;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .button-container {
+                display: none;
+            }
+            h1, p {
+                color: #000;
+            }
+            table, tr, td, th {
+                border-color: #ccc !important;
+            }
+            textarea {
+                border: none !important;
+                background-color: transparent !important;
+                color: #000 !important;
+                resize: none;
+            }
+            input[type="checkbox"] {
+                accent-color: #000;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Abnahme der Software-Anforderungen</h1>
+        <p>
+            Verwende diese Tabelle, um die in der PDF-Datei "anb_22.pdf" beschriebenen Anforderungen zu überprüfen.
+            Deine Kommentare und der Abnahme-Status werden automatisch gespeichert.
+        </p>
+        
+        <div class="button-container">
+            <button class="action-button" onclick="copyTableToClipboard()">Tabelle kopieren</button>
+            <button class="action-button" onclick="window.print()">Als PDF drucken</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="checkbox-cell">Abgenommen</th>
+                    <th>Titel</th>
+                    <th>Beschreibung</th>
+                    <th>Kommentare</th>
+                </tr>
+            </thead>
+            <tbody id="requirements-table-body">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const requirements = [
+            {
+                title: 'Neue Version des Förderangebotes',
+                description: 'Neue Version des Förderangebots und der Änderungsanträge.',
+                priority: null,
+            },
+            {
+                groupTitle: 'Konfigurative Änderungen mit Priorität 1',
+                items: [
+                    {
+                        description: 'Förderangebot auf 1 bzw. 2 Raten je nach Förderhöhe umstellen, inkl. entsprechende Anpassungen am Zuwendungsvertrag',
+                        priority: 1
+                    },
+                    {
+                        description: 'Überarbeitung der Frage 4.1 (Fördergegenstand) zur besseren statistischen Auswertung',
+                        priority: 1
+                    },
+                    {
+                        description: 'Entfernen der Felder "gültig von" und "gültig bis" bei Vertretungsberechtigungen',
+                        priority: 1
+                    },
+                    {
+                        description: 'Abbruch von auszahlungsbezogenen Objekten: Rückforderungen aus VN abbrechen, Verbuchung nach Bestätigung, "Unterjährige Auszahlung" abbrechen, "Rückzahlung" abbrechen, in Auszahlungslisten in Überarbeitung gehen',
+                        priority: 1
+                    },
+                    {
+                        description: 'Export der Gesamtanzahl an Personen für ein Förderjahr aus den Verwendungsnachweisen',
+                        priority: 1
+                    },
+                    {
+                        description: 'Aufteilung der Anlagen am Antrag: "Ergänzungen zur Projektbeschreibung" mit Schreibzugriff, "Allgemeine Dokumente" mit Lesezugriff',
+                        priority: 1
+                    },
+                    {
+                        description: 'Anpassungen Vertrags-Workflow: Vertrag aus der Prüfung wieder an den Antragsteller zurückspielen; Abbruch des Vertrags durch "FP - Leitung" ermöglichen',
+                        priority: 1
+                    },
+                    {
+                        description: 'Technische Anpassungen an Workflows und Templates',
+                        priority: 1
+                    },
+                    {
+                        description: 'Auslieferung der neuesten Versionen auf STAGE und PROD sowie Einspielen der konfigurierten Änderungen',
+                        priority: 1
+                    }
+                ]
+            },
+            {
+                title: 'Nummergenerierung Änderungsanträge',
+                description: 'Änderungsanträge verwenden die Nummerierung des Antrages plus Suffix.',
+                priority: null,
+            },
+            {
+                title: 'Automatisierung der Nachricht "Zur Bewilligung vorgesehen (12)"',
+                description: 'Automatisches Auflösen der Anzahl an Personen und Monaten in der Nachricht.',
+                priority: null,
+            },
+            {
+                groupTitle: 'Konfigurative Änderungen mit Priorität 2',
+                items: [
+                    {
+                        description: 'Liegedauer von Verträgen in Tabellenliste (anstatt Eingangsdatum)',
+                        priority: 2
+                    },
+                    {
+                        description: 'Auflagen aus Antrag am Änderungsvertrag anzeigen',
+                        priority: 2
+                    },
+                    {
+                        description: 'Betreff in E-Mail anpassen',
+                        priority: 2
+                    },
+                    {
+                        description: 'Neue Anforderung beim nächsten Login: Telefonnr. als Pflichtangabe',
+                        priority: 2
+                    },
+                    {
+                        description: 'Anpassung Antragstellerfrage 4.7: Texte des Auswahldialoges anpassen',
+                        priority: 2
+                    },
+                    {
+                        description: 'Sachbericht Validierung ergänzen: Eingabe der Monate nur die Zahlen von 1-12 erlauben',
+                        priority: 2
+                    },
+                    {
+                        description: 'Anpassung Titel und Infotext von Antragstellerfrage 4.4',
+                        priority: 2
+                    },
+                    {
+                        description: 'Ergänzung von Personen am VN: Den Prüfer am VN berechtigen, neue Einträge vorzunehmen und exklusiv Name und PLZ zu bearbeiten',
+                        priority: 2
+                    },
+                    {
+                        description: 'Im Mittelabruf und Verwendungsnachweis den Button "Alternativ: postalisch versenden" entfernen',
+                        priority: 2
+                    }
+                ]
+            },
+            {
+                groupTitle: 'Konfigurative Änderungen mit Priorität 3',
+                items: [
+                    {
+                        description: 'Dashboard: Die Kachel "Anträge entscheiden" soll vorausgefiltert auch Änderungsanträge in Entscheidung anzeigen',
+                        priority: 3
+                    },
+                    {
+                        description: 'Anpassung Prüferfrage 8.2: Bei Auswahl von "Ausschluss von Personen" den Zusatztext anpassen',
+                        priority: 3
+                    },
+                    {
+                        description: 'Berechtigungen: Prüfer berechtigen, Notizen anderer Prüfer zu löschen',
+                        priority: 3
+                    }
+                ]
+            },
+            {
+                groupTitle: 'Konfigurative Änderungen mit Priorität 4',
+                items: [
+                    {
+                        description: 'Team bei Antrag, Vertrag, Auszahlungen nicht anzeigen',
+                        priority: 4
+                    },
+                    {
+                        description: 'Nachrichten: Entfernen von "Wir für Sachsen" aus dem Betreff aller Nachrichten',
+                        priority: 4
+                    }
+                ]
+            },
+            {
+                title: 'Zwei-Faktor-Authentifizierung (2FA)',
+                description: 'Einrichtung der 2FA.',
+                priority: null,
+            },
+            {
+                title: 'Entwicklung: Massenaktion mit allen Anträgen',
+                description: 'Nicht nur in 100er Schritten arbeiten können, sondern mit allen gefilterten Anträgen.',
+                priority: null,
+            },
+        ];
+
+        function loadState() {
+            const savedState = localStorage.getItem('abnahme-tabelle-state');
+            return savedState ? JSON.parse(savedState) : {};
+        }
+
+        function saveState(state) {
+            localStorage.setItem('abnahme-tabelle-state', JSON.stringify(state));
+        }
+
+        // Funktion zum Kopieren der Tabelle in die Zwischenablage
+        function copyTableToClipboard() {
+            const table = document.querySelector('table');
+            let tableText = "";
+
+            // Kopfzeile
+            const headers = table.querySelectorAll('thead th');
+            headers.forEach((header, index) => {
+                // Den letzten Header "Kommentare" ignorieren, da er in der Export-Tabelle an letzter Stelle steht
+                if (index < headers.length - 1) {
+                    tableText += header.textContent + '\t';
+                }
+            });
+            tableText += "Kommentare" + '\t' + "\n"; // Hinzufügen der Kommentare-Spalte am Ende
+
+            const savedState = loadState();
+
+            // Datenzeilen
+            let itemIdCounter = 0;
+            requirements.forEach((item) => {
+                if (item.groupTitle) {
+                    tableText += item.groupTitle + '\t' + '\t' + '\t' + '\t' + '\n';
+                    item.items.forEach(subItem => {
+                         const uniqueId = `req-${itemIdCounter++}`;
+                         const itemState = savedState[uniqueId] || { checked: false, comment: '' };
+                         tableText += (itemState.checked ? 'Ja' : 'Nein') + '\t';
+                         tableText += subItem.description + '\t';
+                         tableText += (subItem.priority ? 'Priorität ' + subItem.priority : '') + '\t';
+                         tableText += itemState.comment + '\n';
+                    });
+                } else {
+                    const uniqueId = `req-${itemIdCounter++}`;
+                    const itemState = savedState[uniqueId] || { checked: false, comment: '' };
+                    tableText += (itemState.checked ? 'Ja' : 'Nein') + '\t';
+                    tableText += item.title + '\t';
+                    tableText += item.description + '\t';
+                    tableText += (item.priority ? 'Priorität ' + item.priority : '') + '\t';
+                    tableText += itemState.comment + '\n';
+                }
+            });
+
+            // Erstellen und Kopieren
+            const el = document.createElement('textarea');
+            el.value = tableText;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            alert('Die Tabelle wurde in die Zwischenablage kopiert! Du kannst sie jetzt in Excel oder Google Sheets einfügen.');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tableBody = document.getElementById('requirements-table-body');
+            const savedState = loadState();
+            let itemIdCounter = 0;
+
+            requirements.forEach((item) => {
+                if (item.groupTitle) {
+                    // Rendere einen Gruppen-Titel als eigene Zeile
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td colspan="4" class="table-group-header">${item.groupTitle}</td>`;
+                    tableBody.appendChild(tr);
+
+                    // Rendere die Unterpunkte der Gruppe
+                    item.items.forEach(subItem => {
+                        const tr = document.createElement('tr');
+                        const uniqueId = `req-${itemIdCounter++}`;
+                        const itemState = savedState[uniqueId] || { checked: false, comment: '' };
+
+                        tr.innerHTML = `
+                            <td class="checkbox-cell">
+                                <input type="checkbox" id="${uniqueId}-check" ${itemState.checked ? 'checked' : ''}>
+                            </td>
+                            <td class="title-cell">
+                                <div class="description-cell">${subItem.description}</div>
+                                <div class="priority">(Priorität ${subItem.priority})</div>
+                            </td>
+                            <td class="description-cell"></td>
+                            <td class="comment-cell">
+                                <textarea id="${uniqueId}-comment" placeholder="Füge hier deine Kommentare hinzu...">${itemState.comment}</textarea>
+                            </td>
+                        `;
+                        tableBody.appendChild(tr);
+
+                        const checkbox = document.getElementById(`${uniqueId}-check`);
+                        checkbox.addEventListener('change', (e) => {
+                            const currentState = loadState();
+                            currentState[uniqueId] = {
+                                ...currentState[uniqueId],
+                                checked: e.target.checked
+                            };
+                            saveState(currentState);
+                        });
+
+                        const textarea = document.getElementById(`${uniqueId}-comment`);
+                        textarea.addEventListener('input', (e) => {
+                            const currentState = loadState();
+                            currentState[uniqueId] = {
+                                ...currentState[uniqueId],
+                                comment: e.target.value
+                            };
+                            saveState(currentState);
+                        });
+                    });
+                } else {
+                    // Rendere normale, nicht-gruppierte Einträge
+                    const tr = document.createElement('tr');
+                    const uniqueId = `req-${itemIdCounter++}`;
+                    const itemState = savedState[uniqueId] || { checked: false, comment: '' };
+
+                    tr.innerHTML = `
+                        <td class="checkbox-cell">
+                            <input type="checkbox" id="${uniqueId}-check" ${itemState.checked ? 'checked' : ''}>
+                        </td>
+                        <td class="title-cell">
+                            <div>${item.title}</div>
+                            ${item.priority ? `<div class="priority">(Priorität ${item.priority})</div>` : ''}
+                        </td>
+                        <td class="description-cell">
+                            ${item.description}
+                        </td>
+                        <td class="comment-cell">
+                            <textarea id="${uniqueId}-comment" placeholder="Füge hier deine Kommentare hinzu...">${itemState.comment}</textarea>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+
+                    const checkbox = document.getElementById(`${uniqueId}-check`);
+                    checkbox.addEventListener('change', (e) => {
+                        const currentState = loadState();
+                        currentState[uniqueId] = {
+                            ...currentState[uniqueId],
+                            checked: e.target.checked
+                        };
+                        saveState(currentState);
+                    });
+
+                    const textarea = document.getElementById(`${uniqueId}-comment`);
+                    textarea.addEventListener('input', (e) => {
+                        const currentState = loadState();
+                        currentState[uniqueId] = {
+                            ...currentState[uniqueId],
+                            comment: e.target.value
+                        };
+                        saveState(currentState);
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
