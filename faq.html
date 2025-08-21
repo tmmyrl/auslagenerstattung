@@ -1,0 +1,437 @@
+import React, { useState, useMemo } from 'react';
+
+// Helper function to highlight search terms
+const Highlight = ({ text, highlight }) => {
+  if (!highlight.trim()) {
+    return <span>{text}</span>;
+  }
+  const regex = new RegExp(`(${highlight})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <span>
+      {parts.map((part, i) =>
+        regex.test(part) ? (
+          <mark key={i} className="bg-yellow-300 px-1 rounded">
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </span>
+  );
+};
+
+// Data for the FAQs
+const faqData = [
+    {
+        title: "Ihr Zugang zum Förderportal",
+        questions: [
+            {
+                q: "Wie registriere ich mich zum ersten Mal?",
+                a: "Willkommen im Förderportal! Direkt nach Ihrer ersten Anmeldung startet automatisch unser Einrichtungs-Assistent. Dieser führt Sie Schritt für Schritt durch die Anlage Ihrer Organisation (Ihres Trägers) und fragt alle notwendigen Daten und Nachweise (z.B. Freistellungsbescheid) ab.\n\n**Unsere Empfehlung:** Halten Sie Ihre Unterlagen bereit und füllen Sie den Assistenten direkt vollständig aus. So ist sichergestellt, dass Ihr Trägerprofil von Anfang an korrekt ist und Sie sofort einen Förderantrag stellen können. Sollten Sie den Prozess doch einmal abbrechen, können Sie die Daten später im Menü unter **„Antragsteller“ → „Antragsteller bearbeiten“** vervollständigen."
+            },
+            {
+                q: "Wie melde ich mich an?",
+                a: "Sobald Sie registriert sind, können Sie sich jederzeit mit Ihrer E-Mail-Adresse und Ihrem Passwort auf der Startseite anmelden."
+            },
+            {
+                q: "Ich habe mein Passwort vergessen – was nun?",
+                a: "Keine Sorge! Klicken Sie auf der Anmeldeseite einfach auf „Passwort vergessen“. Wir leiten Sie dann per E-Mail durch die Schritte, um schnell und sicher ein neues Passwort zu vergeben."
+            },
+            {
+                q: "Wie kann ich meine E-Mail-Adresse oder mein Passwort ändern?",
+                a: "Alle Ihre persönlichen Einstellungen finden Sie an einem zentralen Ort: in Ihrem Profil. Klicken Sie dazu einfach **oben rechts auf Ihren Namen** und dann auf **„Profil“**. Wählen Sie in Ihrem Profil die Rubrik **„Anmeldedaten“**. Hier können Sie jederzeit Ihre E-Mail-Adresse anpassen oder ein neues Passwort festlegen. Bei einer E-Mail-Änderung senden wir Ihnen eine Bestätigungsmail an die neue Adresse, um die Änderung abzuschließen."
+            },
+            {
+                q: "Wo kann ich meine persönlichen Daten (z. B. den Namen) ändern?",
+                a: "Ihren Namen oder Ihre Anrede können Sie in der Rubrik **„Persönliche Daten“** in Ihrem Profil jederzeit anpassen."
+            },
+            {
+                q: "Wie melde ich mich sicher ab?",
+                a: "Um sich abzumelden, klicken Sie oben rechts auf Ihren Namen und wählen Sie die Option „Abmelden“."
+            }
+        ]
+    },
+    {
+        title: "Ihre Startseite: Das Dashboard als Cockpit",
+        questions: [
+            {
+                q: "Was sehe ich auf der Startseite?",
+                a: "Nach dem Anmelden landen Sie immer auf Ihrer persönlichen Startseite, dem Dashboard. Stellen Sie es sich wie ein Cockpit für Ihre Förderprojekte vor. Hier sehen Sie auf einen Blick, welche Aufgaben anstehen, ob es neue Nachrichten gibt und erhalten über die Kacheln schnellen Zugriff auf Ihre wichtigsten Bereiche."
+            },
+            {
+                q: "Wie komme ich immer wieder zur Startseite zurück?",
+                a: "Ganz einfach: Klicken Sie jederzeit links oben im Hauptmenü auf **„Start“**, um zu Ihrer Dashboard-Übersicht zurückzukehren."
+            },
+            {
+                q: "Was bedeuten die Ankündigungen?",
+                a: "In diesem Bereich unterhalb der Kacheln versorgen wir Sie mit allen wichtigen Informationen rund um Ihr Förderprojekt. Hier kündigen wir zum Beispiel Fristen, Auszahlungstermine oder Wartungsarbeiten an. Ein regelmäßiger Blick hier rein lohnt sich!"
+            },
+            {
+                q: "Was zeigt mir die Kachel „Bald zu erledigen“?",
+                a: "Diese Kachel ist Ihre persönliche To-do-Liste. Sie wird aktiv, sobald Aufgaben oder Fristen näher rücken, und hilft Ihnen dabei, nichts Wichtiges zu verpassen."
+            },
+            {
+                q: "Was zeigt mir die Kachel „Meine Nachrichten“?",
+                a: "Hier sehen Sie auf einen Blick, ob es neue, persönliche Nachrichten für Sie gibt. Die Zahl in der Ecke verrät Ihnen die Anzahl der ungelesenen Mitteilungen. Wenn keine neuen Nachrichten da sind, ist die Kachel inaktiv."
+            },
+            {
+                q: "Was finde ich unter „Alle Anträge“?",
+                a: "Diese Kachel führt Sie zu einer Gesamtübersicht **aller** Anträge, die Sie für Ihre Organisation(en) gestellt haben – egal, ob sie noch in Bearbeitung, bewilligt oder abgelehnt sind."
+            },
+            {
+                q: "Was finde ich unter „Alle Förderungen“?",
+                a: "Hier landen Sie in einer gefilterten Übersicht, die Ihnen nur die Projekte anzeigt, die bereits **bewilligt** wurden und für die ein Fördervertrag besteht. Dies ist Ihr Arbeitsbereich für laufende Projekte."
+            },
+            {
+                q: "Wofür nutze ich „Neuen Antrag anlegen“?",
+                a: "Über diese Kachel starten Sie einen komplett neuen Förderantrag. Beachten Sie bitte die jährliche Antragsfrist vom 1. September bis zum 31. Oktober für Projekte im Folgejahr."
+            },
+            {
+                q: "Wofür nutze ich „Neuen Mittelabruf / Verwendungsnachweis anlegen“?",
+                a: "Diese Kachel wird aktiv, sobald Sie einen bewilligten Vertrag haben. Sie nutzen sie, um die Auszahlung Ihrer Fördergelder zu beantragen (Mittelabruf) oder um nach Projektende Ihre Abrechnung einzureichen (Verwendungsnachweis)."
+            },
+            {
+                q: "Warum sind manche Kacheln auf meiner Startseite grau und nicht klickbar?",
+                a: "Das Dashboard ist interaktiv und zeigt Ihnen nur die Aktionen an, die gerade für Sie relevant sind. Eine graue Kachel bedeutet, dass es in diesem Bereich aktuell nichts zu tun gibt oder keine Einträge vorhanden sind. Zum Beispiel ist die Kachel „Meine Nachrichten“ nur aktiv, wenn Sie ungelesene Nachrichten haben."
+            },
+            {
+                q: "Kann ich meine Startseite anpassen oder Kacheln ausblenden?",
+                a: "Die Anordnung und Sichtbarkeit der Kacheln ist für alle Nutzerinnen und Nutzer standardisiert, um eine einheitliche Bedienung zu gewährleisten. Eine individuelle Anpassung ist daher nicht vorgesehen."
+            }
+        ]
+    },
+    {
+        title: "Organisation & Nutzer verwalten",
+        questions: [
+            {
+                q: "Was sind meine Organisationsdaten und warum sind sie so wichtig?",
+                a: "Die Organisationsdaten sind das Herzstück Ihres Profils im Förderportal. Alle Anträge und Verträge greifen auf diese zentralen Informationen zurück. Es ist daher entscheidend, dass diese Daten immer aktuell sind.\n\nSie finden Ihre Daten im Menü unter **„Antragsteller“ → „Antragsteller bearbeiten“**. Dort können Sie alle wichtigen Bereiche einsehen und nach einem Klick auf **„Organisation bearbeiten“** auch anpassen:\n- **Organisation:** Allgemeine Kontaktdaten Ihres Vereins oder Ihrer Einrichtung.\n- **Bankverbindungen:** Ihre offizielle Bankverbindung für die Auszahlung der Fördergelder.\n- **Vertretungsberechtigte:** Die Personen, die rechtlich für Ihre Organisation unterschreiben dürfen (z.B. laut Vereinsregister).\n- **Nachweise:** Hier laden Sie wichtige Dokumente hoch (z.B. Freistellungsbescheid, Vereinsregisterauszug).\n- **Nutzer:** Alle Personen, die für Ihre Organisation im Portal Anträge stellen dürfen.\n\nHaben Sie Änderungen vorgenommen, klicken Sie bitte auf **\"Änderungen einreichen\"**, um sie zu speichern."
+            },
+            {
+                q: "Was ist der Unterschied zwischen einem Träger und einem Nutzer?",
+                a: "Ganz einfach:\n- Der **Träger** (oder die **Organisation**) ist die Einrichtung, die die Förderung erhält (z.B. Ihr Verein).\n- Der **Nutzer** sind Sie – die Person, die sich mit einer E-Mail-Adresse anmeldet und im Namen des Trägers handelt.\n\nEine Organisation kann mehrere Nutzer haben, und ein Nutzer kann für mehrere Organisationen tätig sein."
+            },
+            {
+                q: "Wie kann ich mit meinem Konto für eine weitere Organisation Anträge stellen?",
+                a: "Ja, das ist möglich. Gehen Sie zu „Antragsteller“ → „Antragsteller bearbeiten“ und klicken Sie auf **„Für neuen Antragsteller tätig werden“**. Sie können dann nach einer bereits existierenden Organisation suchen oder eine neue anlegen."
+            },
+            {
+                q: "Eine neue Person möchte für unsere Organisation tätig werden. Wie schalte ich sie frei?",
+                a: "Die Person, die Ihre Organisation im Portal angelegt hat, ist automatisch **Nutzerverwalter**. Nur diese Person kann neue Nutzer freischalten. Gehen Sie dazu in Ihre Organisationsdaten zur Rubrik **„Nutzer“**. Dort sehen Sie die Person mit dem Status „beantragt“. Über das „Aktionen“-Menü können Sie die Anfrage annehmen."
+            },
+            {
+                q: "Wie kann ich die Rolle des Nutzerverwalters an eine andere Person übergeben?",
+                a: "Pro Organisation gibt es immer nur eine/-n Nutzerverwalter/-in. Um die Rolle zu übertragen, gehen Sie in Ihren Organisationsdaten zur Rubrik **„Nutzer“**. Wählen Sie bei der gewünschten Person im Menü „Aktionen“ die Funktion **„Rolle Nutzerverwalter zuweisen“** aus."
+            },
+            {
+                q: "Wo hinterlege ich die offiziell unterschriftsberechtigten Personen?",
+                a: "Personen, die Verträge und Nachweise rechtsgültig unterschreiben dürfen, müssen in den Organisationsdaten hinterlegt sein. Gehen Sie dazu in die Rubrik **„Vertretungsberechtigte“** und tragen Sie die Personen gemäß Ihres Vereinsregisters oder Ihrer internen Regelungen ein. **Wichtig:** Laden Sie unter „Nachweise“ auch die passenden Belege (z.B. Vereinsregisterauszug, Vollmacht) hoch."
+            }
+        ]
+    },
+    {
+        title: "Der Wegweiser für Ihren Antrag",
+        questions: [
+            {
+                q: "Wie stelle ich einen neuen Projektantrag?",
+                a: "**Antrag starten:** Klicken Sie auf der Startseite auf die Kachel „Neuen Antrag anlegen“ oder gehen Sie über das Menü „Anträge“ → „Neuen Antrag stellen“. Wählen Sie anschließend das Förderprogramm „Wir für Sachsen“ aus.\n**Formular ausfüllen:** Bearbeiten Sie die einzelnen Abschnitte des Antrags. Sie können die Reihenfolge selbst wählen und jederzeit zwischenspeichern. Alle Pflichtfelder sind mit einem Sternchen (*) markiert. Mit dem Button „Vollständigkeit prüfen“ können Sie jederzeit kontrollieren, ob noch Angaben fehlen.\n**Antrag einreichen:** Wenn alle Angaben korrekt sind, klicken Sie auf „Antrag einreichen“. Im Anschluss wird automatisch eine Antragsbestätigung (PDF) erstellt.\n**Bestätigung unterschreiben und hochladen:** Zum Abschluss muss die Antragsbestätigung unterschrieben werden. Sie können das PDF entweder ausdrucken, von Hand unterschreiben und wieder einscannen, oder es direkt **digital signieren**. Laden Sie die unterschriebene Datei anschließend über den Button „Antragsbestätigung hochladen“ hoch. **Wichtig:** Bitte nutzen Sie nur diesen Weg und laden Sie das Dokument nicht als allgemeine 'Anlage' hoch, da es sonst nicht korrekt zugeordnet wird."
+            },
+            {
+                q: "Wie lege ich fest, wer den Antrag bearbeiten kann?",
+                a: "In der Rubrik „Antragstellende Organisation“ legen Sie die Ansprechpersonen für das Projekt fest. Diese Personen haben vollen Zugriff auf den Antrag und erhalten alle wichtigen Nachrichten dazu. **Wichtig:** Eine Person kann hier nur ausgewählt werden, wenn sie bereits als Nutzer für Ihre Organisation freigeschaltet ist. Bitte tragen Sie hier maximal zwei Personen ein."
+            },
+            {
+                q: "Wer kann meinen Antrag sehen? (Das Schloss-Symbol)",
+                a: "Mit dem Schloss-Symbol oben im Antrag steuern Sie die Sichtbarkeit:\n- **Schloss geschlossen (Standard):** Nur Sie und die eingetragenen Ansprechpersonen können den Antrag sehen.\n- **Schloss offen:** Alle Nutzerinnen und Nutzer Ihrer Organisation im Förderportal können den Antrag einsehen."
+            },
+            {
+                q: "Wo finde ich eine Übersicht all meiner Anträge?",
+                a: "Eine komplette Liste all Ihrer Anträge (egal in welchem Status) finden Sie an zwei Orten: Entweder über die Kachel **„Alle Anträge“** auf der Startseite oder im Menü unter „Anträge“ → „Anträge bearbeiten“."
+            },
+            {
+                q: "Wo finde ich meine bewilligten Förderungen?",
+                a: "Alle Projekte, die bewilligt wurden und für die ein Vertrag erstellt wurde, finden Sie unter der Kachel **„Alle Förderungen“** auf der Startseite. Alternativ können Sie im Menü über „Anträge“ → „Verträge bearbeiten“ darauf zugreifen."
+            },
+            {
+                q: "Kann ich mir persönliche Notizen zum Antrag machen?",
+                a: "Ja! Überall, wo Sie das Pinnnadel-Symbol sehen, können Sie persönliche Notizen hinterlegen. Diese sind **nicht** für uns als Förderstelle sichtbar. Sie können unter der Notiz einstellen, ob diese nur für Sie oder für alle Nutzer Ihrer Organisation sichtbar sein soll. Ein farbiges Symbol zeigt Ihnen an, wo bereits Notizen vorhanden sind."
+            },
+            {
+                q: "Wie funktioniert die Kommunikation zum Antrag?",
+                a: "Die gesamte Kommunikation läuft direkt über das Portal.\n- **Nachrichten empfangen:** Sie erhalten automatische Systemnachrichten (z.B. über Statusänderungen) und persönliche Nachrichten von uns. Eine Übersicht finden Sie im Menü unter „Nachrichten“ → „Posteingang“.\n- **Nachrichten senden:** Wenn Sie eine Frage direkt zu Ihrem Antrag haben, gehen Sie in die Rubrik „Zusammenfassung“. Dort sehen Sie Ihre zuständige Ansprechperson. Klicken Sie einfach auf den Namen, um eine Nachricht zu verfassen. So ist Ihre Anfrage immer direkt dem richtigen Projekt zugeordnet."
+            },
+            {
+                q: "Wo finde ich alle Dokumente zu meinem Antrag?",
+                a: "Alle wichtigen Dokumente sind direkt bei Ihrem Antrag gesammelt:\n- Die wichtigsten Dokumente (z.B. die Antragsbestätigung) finden Sie in der Rubrik **„Zusammenfassung“**.\n- Eine vollständige Liste aller Dateien finden Sie im Reiter **„Anlagen zum Antrag“**.\n- Über den Button **„Weitere Aktionen“** können Sie Dokumente, wie eine Antragsvorschau, jederzeit neu erstellen."
+            },
+            {
+                q: "Wer ist gerade am Zug und bearbeitet den Antrag?",
+                a: "In der rechten Seitenleiste Ihres Antrags sehen Sie immer den aktuellen Bearbeitungsschritt und wer dafür zuständig ist. Wenn Ihr Name dort steht und der Bereich gelb hinterlegt ist, liegt die Aufgabe bei Ihnen."
+            },
+            {
+                q: "Wo sehe ich den aktuellen Status meines Antrags?",
+                a: "Sie können den Bearbeitungsstand an zwei Stellen einsehen:\n- **In der Übersicht:** In der Liste all Ihrer Anträge gibt es die Spalte „Status“.\n- **Im Detail:** Wenn Sie einen Antrag öffnen, sehen Sie den genauen Status und den bisherigen Verlauf in der rechten Seitenleiste."
+            }
+        ]
+    },
+    {
+        title: "Ihr Fördervertrag: Die nächsten Schritte",
+        questions: [
+            {
+                q: "Wie erhalte ich meinen Vertrag?",
+                a: "Sobald Ihr Antrag bewilligt ist, stellen wir Ihnen den Fördervertrag digital im Portal zur Verfügung. So finden Sie ihn:\n1. Klicken Sie auf der Startseite auf die Kachel **„Alle Förderungen“** (oder im Menü auf „Anträge“ → „Verträge bearbeiten“).\n2. Wählen Sie in der Liste das entsprechende Projekt aus und klicken Sie auf die Vertragsnummer.\n3. Im Bereich **„Übersicht“** finden Sie den Vertrag als PDF-Dokument zum Herunterladen."
+            },
+            {
+                q: "Was muss ich tun, um den Vertrag einzureichen und die Förderung zu aktivieren?",
+                a: "Damit Ihre Förderung aktiv wird, müssen Sie den Vertrag nur noch unterschreiben und an uns übermitteln. Dafür haben Sie zwei Möglichkeiten:\n- **Digital einreichen (unsere Empfehlung):** Drucken Sie die letzte Seite des Vertrags aus, unterschreiben Sie diese und laden Sie sie über den Button **„Zuwendungsvertrag hochladen“** wieder im Portal hoch. Eine rein digitale Unterschrift ist ebenfalls möglich. Dies ist der schnellste Weg zur Aktivierung.\n- **Postalisch einreichen:** Drucken Sie den **vollständigen** Vertrag aus und lassen Sie ihn von der vertretungsberechtigten Person Ihrer Organisation unterschreiben. Senden Sie uns den gesamten Vertrag per Post zu. Bitte beachten Sie, dass die Bearbeitung hier deutlich länger dauern kann.\n\n**Wichtiger Hinweis vor der Unterschrift:**\nPrüfen Sie bitte, ob die im Vertrag genannten vertretungsberechtigten Personen noch aktuell sind. Falls nicht, kontaktieren Sie uns bitte, **bevor** Sie unterschreiben. Wir stellen Ihnen dann einen korrigierten Vertrag aus.\n\nSobald wir Ihren unterschriebenen Vertrag erhalten und geprüft haben, wird die Förderung aktiviert. Ab diesem Moment können Sie Ihre Fördermittel abrufen."
+            }
+        ]
+    },
+    {
+        title: "Auszahlung & Nachweis Ihrer Förderung",
+        questions: [
+            {
+                q: "Wo finde ich meine Mittelabrufe und Verwendungsnachweise?",
+                a: "Eine Übersicht all Ihrer Mittelabrufe und Verwendungsnachweise finden Sie im Menü unter **„Anträge“ → „Mittelabruf/Verwendungsnachweis bearbeiten“**. Klicken Sie einfach auf die jeweilige Nummer, um die Details zu öffnen."
+            },
+            {
+                q: "Wie rufe ich meine Fördermittel ab?",
+                a: "Sobald Ihr Fördervertrag aktiv ist, können Sie die Auszahlung Ihrer Mittel beantragen (Mittelabruf). Je nach Fördersumme geschieht dies in einer oder zwei Raten. Die genauen Auszahlungstermine teilen wir Ihnen über die \"Ankündigungen\" auf der Startseite mit.\nSo gehen Sie vor:\n- **Mittelabruf starten:** Klicken Sie auf der Startseite auf die Kachel „Neuen Mittelabruf / Verwendungsnachweis anlegen“ und wählen Sie den passenden Vertrag aus.\n- **Rate erstellen:** In der Rubrik „Mittelabrufe & Verwendungsnachweise“ klicken Sie auf „Rate 1 erstellen“ (bzw. später „Rate 2 erstellen“).\n- **Daten prüfen:** Kontrollieren Sie die Bankverbindung und ergänzen Sie bei Bedarf den Verwendungszweck.\n- **Dokument erstellen & unterschreiben:** Klicken Sie auf „Mittelanforderungsdokument erstellen“. Das erzeugte PDF muss nun von einer vertretungsberechtigten Person unterschrieben werden – entweder digital oder als Ausdruck.\n- **Dokument hochladen:** Laden Sie das unterschriebene Dokument über den Button „Mittelanforderung hochladen“ wieder im Portal hoch. Ein postalischer Versand ist ebenfalls möglich, führt aber zu längeren Bearbeitungszeiten."
+            },
+            {
+                q: "Wie erstelle ich den Verwendungsnachweis am Jahresende?",
+                a: "Nach Abschluss des Förderjahres müssen Sie bis zum **28. Februar des Folgejahres** den Verwendungsnachweis einreichen. Darin legen Sie dar, wie die Mittel verwendet wurden.\nSo erstellen Sie den Nachweis:\n- **Verwendungsnachweis starten:** Der Weg ist derselbe wie beim Mittelabruf. Klicken Sie auf „Neuen Mittelabruf / Verwendungsnachweis anlegen“ und wählen Sie den Vertrag des abzurechnenden Jahres aus.\n- **Nachweis erstellen:** In der Rubrik „Mittelabrufe & Verwendungsnachweise“ klicken Sie auf „Verwendungsnachweis erstellen“.\n- **Zahlungen eintragen:** Gehen Sie zur Rubrik „Sachbericht“. Hier sehen Sie die Liste der gemeldeten Ehrenamtlichen. Tragen Sie bei jeder Person den exakten Betrag ein, der im Förderjahr ausgezahlt wurde. Die Gesamtsumme darf Ihre bewilligte Fördersumme nicht überschreiten.\n- **Sachbericht ausfüllen:** Beantworten Sie die weiteren Fragen zur Projektumsetzung.\n- **Dokument erstellen, unterschreiben & hochladen:** Klicken Sie auf „Verwendungsnachweisdokument erstellen“, lassen Sie es (digital oder auf Papier) unterschreiben und laden Sie es anschließend wieder hoch."
+            },
+            {
+                q: "Welche Belege muss ich für eine Tiefenprüfung vorhalten?",
+                a: "Auch wenn Sie die Belege nicht direkt mit dem Verwendungsnachweis einreichen, müssen Sie die Auszahlung an jede ehrenamtliche Person lückenlos nachweisen können, falls es zu einer stichprobenartigen Tiefenprüfung kommt.\nDafür werden nur zwei Arten von Nachweisen anerkannt:\n- **Bei Barauszahlung:** Eine von der empfangenden Person **unterschriebene Quittung**. Auf dieser müssen der Name, das Datum, der Betrag und der Verwendungszweck (z.B. \"Aufwandsentschädigung Wir für Sachsen\") klar ersichtlich sein.\n- **Bei Überweisung:** Ein **eindeutiger Kontoauszug**, aus dem Empfänger/-in, Datum, Betrag und Verwendungszweck hervorgehen.\n\nAndere Nachweise können wir leider nicht akzeptieren."
+            }
+        ]
+    },
+    {
+        title: "Ehrenamtliche nachmelden oder ändern",
+        questions: [
+            {
+                q: "Wie kann ich Änderungen bei den ehrenamtlichen Teilnehmern melden?",
+                a: "Hat sich in Ihrem Team etwas geändert? Kein Problem! Wenn neue Ehrenamtliche dazukommen, jemand das Projekt verlässt oder sich Einsatzzeiträume ändern, teilen Sie uns das einfach mit einem Änderungsantrag mit. Wir führen Sie Schritt für Schritt durch den Prozess:\n- **Ihren Antrag finden:** Gehen Sie im Menü auf „Anträge“ → „Anträge bearbeiten“ und wählen Sie das passende Projekt aus.\n- **Änderungsantrag erstellen:** In der Antragsübersicht finden Sie den Reiter „Änderungsanträge“. Klicken Sie dort auf „Erstellen“ und wählen Sie „Wir für Sachsen – Änderungsantrag“. Der Änderungsantrag wird nun erstellt und erscheint in der Liste direkt unter dem „Erstellen“-Button. Sie erkennen ihn an der Endung „-ÄA1“ (für den ersten Änderungsantrag, „-ÄA2“ für den zweiten usw.). Klicken Sie auf diese neue Antragsnummer, um den Antrag zu öffnen und zu bearbeiten.\n- **Antrag ausfüllen:** Jetzt geht es an die Details. Füllen Sie die folgenden Bereiche sorgfältig aus:\n    - **Daten prüfen:** Werfen Sie einen kurzen Blick auf Ihre Angaben in Rubrik 1. Ist noch alles aktuell?\n    - **Änderung beschreiben:** In Rubrik 2 können Sie einen kurzen Titel für die Änderung eintragen (z. B. „Neue Teilnehmerin im Team“).\n    - **Art der Änderung auswählen:** Hier ist es wichtig, den richtigen Grund anzugeben. Die häufigsten Fälle sind:\n        - **Nachmeldung von Personen:** Wählen Sie dies, wenn neue Ehrenamtliche dazukommen oder bestehende das Team verlassen, sich die bewilligte Fördersumme dadurch aber **nicht** ändert.\n        - **Reduzierung der Teilnehmermonate:** Wählen Sie dies, wenn Personen das Projekt verlassen und sich die Fördersumme dadurch verringert.\n        - **Nachbewilligung:** Diese Option nutzen Sie bitte nur, wenn wir Sie ausdrücklich dazu auffordern.\n    - **Namensliste anpassen:** Fügen Sie neue Personen hinzu oder ändern Sie die Zeiträume für bestehende Teilnehmer. Das funktioniert genauso, wie Sie es vom Hauptantrag kennen. **Wichtiger Hinweis zum Löschen:** Entfernen Sie eine Person nur dann vollständig aus der Liste, wenn sie für das gesamte Förderjahr **keine Aufwandsentschädigung** erhalten soll. Gelöschte Personen können im späteren Verwendungsnachweis nicht mehr berücksichtigt werden.\n    - **Erklärungen bestätigen:** Bitte lesen und bestätigen Sie die abschließenden Erklärungen.\n- **Digital einreichen – fertig!** Klicken Sie auf „Änderungsantrag einreichen“. Damit ist alles erledigt. Sie brauchen uns keine Unterlagen per Post zu schicken.\n\n**Das sollten Sie beachten:**\n- **Der richtige Zeitpunkt:** Änderungen sind nur im laufenden Förderjahr (1. Januar bis 31. Dezember) möglich. Bitte denken Sie daran, alles rechtzeitig einzutragen, denn im späteren Verwendungsnachweis können keine Personen mehr geändert oder hinzugefügt werden.\n- **Der einzige Weg:** Neue Ehrenamtliche können **ausschließlich** über einen Änderungsantrag gemeldet werden. Eine nachträgliche Meldung auf anderem Weg ist leider nicht möglich.\n- **Wer gefördert wird:** Nur die Personen, die über das Förderportal für Ihr Projekt gemeldet sind, können eine Aufwandsentschädigung erhalten.\n\n**Und dann?**\nNach einer kurzen Prüfung durch uns erhalten Sie eine Bestätigung per Nachricht im Portal. Die Namensliste in Ihrem ursprünglichen Antrag wird dann automatisch aktualisiert."
+            }
+        ]
+    },
+    {
+        title: "Alle wichtigen Termine auf einen Blick",
+        questions: [
+            {
+                q: "Welche Fristen und Termine muss ich im Förderjahr beachten?",
+                a: "Damit Sie immer den Überblick behalten, haben wir hier die wichtigsten Termine des Förderjahres für Sie zusammengefasst.\n- **Antrag einreichen (für das kommende Förderjahr):** 1. September bis 31. Oktober\n- **Vertrag einreichen & 1. Rate abrufen:** bis zum 30. Juni (im laufenden Projektjahr)\n- **Änderungsanträge stellen:** jederzeit nach der Bewilligung bis zum 31. Dezember (im laufenden Projektjahr)\n- **2. Rate abrufen (falls zutreffend):** bis zum 30. November (im laufenden Projektjahr)\n- **Verwendungsnachweis einreichen (für das abgeschlossene Projektjahr):** 1. Januar bis 28. Februar des Folgejahres\n\n**Unser Tipp:** Tragen Sie sich die für Sie relevanten Daten am besten direkt in Ihren Kalender ein!"
+            }
+        ]
+    },
+    {
+        title: "Das Portal nutzen: Wichtige Funktionen und Navigation",
+        questions: [
+            {
+                q: "Wie ist das Portal grundsätzlich aufgebaut?",
+                a: "Am besten orientieren Sie sich an drei zentralen Bereichen:\n- **Das Hauptmenü (links):** Hier finden Sie alle großen Themenbereiche wie Anträge, Finanzen oder Ihre Organisation.\n- **Die Startseite (Dashboard):** Ihr persönlicher Startpunkt mit den Kacheln als Schnellzugriff auf die wichtigsten Listen und Aktionen.\n- **Die Seitenleiste (rechts):** Wenn Sie einen Antrag oder Vertrag geöffnet haben, sehen Sie hier immer den aktuellen Status, Ihre Aufgaben und die Quicklinks."
+            },
+            {
+                q: "Wo sehe ich meine aktuellen Aufgaben?",
+                a: "Ihre wichtigsten Aufgaben finden Sie an zwei Stellen:\n- Auf der **Startseite** in der Kachel **„Bald zu erledigen“**.\n- Wenn Sie einen Antrag geöffnet haben, in der **rechten Seitenleiste**. Ist ein Feld gelb hinterlegt und Ihr Name steht darin, ist eine Aktion von Ihnen erforderlich."
+            },
+            {
+                q: "Warum kann ich manche Felder nicht ausfüllen oder bearbeiten?",
+                a: "Viele Bereiche im Portal haben einen Lese- und einen Bearbeitungsmodus. Wenn Sie Daten nur sehen, aber nicht ändern können, klicken Sie einfach auf den **„Bearbeiten“**-Button (oft mit einem Stift-Symbol). Dadurch werden die Felder aktiv und Sie können Ihre Eingaben machen. Vergessen Sie nicht, danach zu speichern!"
+            },
+            {
+                q: "Ich habe etwas eingereicht, aber einen Fehler entdeckt. Kann ich das korrigieren?",
+                a: "Ja, in den meisten Fällen ist das möglich, solange wir den Vorgang noch nicht final bearbeitet haben. Bei eingereichten Anträgen, Mittelabrufen oder Verwendungsnachweisen erscheint oft ein Button wie **„... überarbeiten“**. Damit können Sie den Vorgang zurückholen, Ihre Korrekturen vornehmen und ihn erneut einreichen."
+            },
+            {
+                q: "Wie funktioniert die Kommunikation im Förderportal?",
+                a: "Die gesamte Kommunikation zu Ihren Projekten läuft direkt und sicher über das Portal.\n- **Nachrichten finden:** Im Menü unter **„Nachrichten“ → „Posteingang“** finden Sie alle Mitteilungen, die Sie erhalten haben. Ihre gesendeten Nachrichten liegen im **„Postausgang“**. Auf der Startseite macht Sie zudem die Kachel **„Meine Nachrichten“** auf neue, ungelesene Mitteilungen aufmerksam.\n- **Nachricht aus einem Antrag senden:** Am einfachsten ist es, wenn Sie direkt aus einem Projekt heraus eine Nachricht senden. Gehen Sie dazu in die **„Zusammenfassung“** Ihres Antrags (oder Vertrags etc.). Dort sehen Sie Ihre zuständige Ansprechperson bei uns. Klicken Sie einfach auf den Namen, um eine Nachricht zu verfassen. So ist Ihre Anfrage immer direkt dem richtigen Vorgang zugeordnet.\n- **Bitte beachten:** Automatische System-Nachrichten (z. B. über eine Statusänderung) dienen nur Ihrer Information und können nicht direkt beantwortet werden."
+            },
+            {
+                q: "Was sind Quicklinks und wie helfen sie mir?",
+                a: "Die Quicklinks sind eine Abkürzung, damit Sie nicht lange suchen müssen. Wenn Sie einen Vorgang geöffnet haben (z. B. einen Antrag), finden Sie in der rechten Menüleiste den Bereich **„Gehe zu“**. Dort sind alle dazugehörigen Teile Ihres Projekts direkt verlinkt. So können Sie mit nur einem Klick vom Antrag zum Vertrag, von dort zur Mittelanforderung und weiter zum Verwendungsnachweis springen, ohne über das Hauptmenü gehen zu müssen."
+            }
+        ]
+    },
+    {
+        title: "Listenansichten: Suchen, Filtern, Exportieren",
+        questions: [
+            {
+                q: "Wie kann ich die Listen durchsuchen und filtern?",
+                a: "Oberhalb jeder Liste finden Sie eine Suchfunktion. Für gezielte Ergebnisse klicken Sie auf **„Erweiterte Suche öffnen“**. Hier können Sie über **„Filter hinzufügen“** verschiedene Suchkriterien kombinieren (z. B. nach Status oder Jahrgang). Klicken Sie anschließend auf **„Suche starten“**."
+            },
+            {
+                q: "Kann ich eine häufige Suche speichern?",
+                a: "Ja. Nachdem Sie eine Suche durchgeführt haben, erscheint der Button **„Suche speichern“**. Geben Sie Ihrer Suche einen passenden Namen. Sie können sie dann jederzeit aus der Liste Ihrer gespeicherten Suchen wieder aufrufen, ohne alle Filter neu setzen zu müssen."
+            },
+            {
+                q: "Kann ich die Listen-Daten exportieren?",
+                a: "Ja. Mit dem Export-Button (ein blauer Pfeil, der nach unten zeigt) können Sie Ihre aktuelle Listenansicht als CSV-Datei herunterladen. Diese Datei können Sie dann zum Beispiel in Excel öffnen und weiterverarbeiten. **Wichtig:** Es werden immer nur die Datensätze exportiert, die Ihrem aktuellen Filter entsprechen."
+            }
+        ]
+    },
+    {
+        title: "Begriffe einfach erklärt: Das Förder-ABC",
+        questions: [
+            { q: "Allgemeine Nebenbestimmungen (ANBest-P)", a: "Das ist sozusagen das „Kleingedruckte“ Ihres Zuwendungsvertrags. Die ANBest-P sind standardisierte Regeln für alle Förderprojekte, die wichtige Pflichten bei der Durchführung und Abrechnung festlegen." },
+            { q: "Ansprechperson", a: "Die im Antrag benannten Ansprechpersonen sind die offiziellen Kontaktpersonen für ein Projekt. Nur sie können den Antrag im Portal sehen (wenn das Schloss geschlossen ist) und erhalten wichtige Systemnachrichten." },
+            { q: "Antragsberechtigt", a: "Antragsberechtigt sind alle Organisationen, die gemeinnützig tätig sind. Dazu gehören zum Beispiel eingetragene Vereine, Stiftungen, Kirchen, Kommunen oder Wohlfahrtsverbände." },
+            { q: "Aufwandsentschädigung", a: "Dies ist eine finanzielle Anerkennung für ehrenamtliches Engagement. Sie dient als pauschaler Ausgleich für entstandene Aufwände, wie zum Beispiel Fahrtkosten. In unserem Förderprogramm nutzen wir dafür die sogenannte Ehrenamtspauschale." },
+            { q: "Bewilligungszeitraum", a: "Dies ist der offizielle Zeitraum, in dem die Fördermittel für Ihr Projekt verwendet und abgerechnet werden dürfen. Für das Programm \"Wir für Sachsen\" ist das immer das komplette Kalenderjahr, also vom 1. Januar bis zum 31. Dezember." },
+            { q: "Doppelförderung", a: "Für dieselbe ehrenamtliche Tätigkeit darf nur eine Förderung in Anspruch genommen werden. Das bedeutet: Erhält eine Person für ihr Engagement bereits eine Aufwandsentschädigung aus anderen öffentlichen Mitteln (z. B. von EU, Bund, Land oder Kommune), ist eine Förderung über \"Wir für Sachsen\" ausgeschlossen. Eine Person darf außerdem nicht für den gleichen Zeitraum in mehreren \"Wir für Sachsen\"-Projekten gemeldet sein." },
+            { q: "Drittmittel", a: "Das sind Gelder von Dritten (z.B. Sponsoren), mit denen Sie die monatliche Pauschale für Ihre Ehrenamtlichen aufstocken können. Diese Mittel dürfen jedoch nicht aus anderen Förderprogrammen des Bundes oder der EU für das gleiche Projekt stammen." },
+            { q: "Ehrenamtspauschale", a: "Dies ist eine steuer- und sozialversicherungsfreie Zahlung von bis zu 840 Euro pro Jahr und Person als Anerkennung für ehrenamtliches Engagement. Die Zuwendungen aus dem \"Wir für Sachsen\"-Programm fallen in diesen Bereich und sollten von den Ehrenamtlichen in der eigenen Steuererklärung angegeben werden." },
+            { q: "Eigenmittel / Eigenanteil", a: "Das sind die finanziellen Mittel, die Ihre Organisation selbst zum Projekt beisteuert. Sie stammen also direkt aus Ihrem eigenen Vermögen und nicht von Dritten (wie bei Drittmitteln oder Spenden)." },
+            { q: "Förderkriterien", a: "Das sind die Maßstäbe, nach denen wir Ihren Antrag bewerten. Wir prüfen zum Beispiel, ob das Projekt gut durchdacht ist, der zeitliche Aufwand der Ehrenamtlichen nachvollziehbar ist und ob es im Verhältnis zu ähnlichen Projekten steht." },
+            { q: "Freistellungsbescheid & Feststellungsbescheid", a: "Beide Dokumente stellt das Finanzamt aus. Sie sind der offizielle Nachweis, dass Ihre Organisation als gemeinnützig anerkannt ist und somit Spendenbescheinigungen ausstellen darf.\n- **Feststellungsbescheid:** Erhalten Sie nach der Gründung Ihrer Organisation als vorläufige Anerkennung.\n- **Freistellungsbescheid:** Erhalten Sie nach einer turnusmäßigen Prüfung (i.d.R. alle 3 Jahre) durch das Finanzamt. Er ist maximal 5 Jahre gültig." },
+            { q: "Juristische Personen", a: "Das ist der rechtliche Begriff für eine Organisation, die als Einheit rechtsfähig ist. Dazu gehören zum Beispiel eingetragene Vereine (e.V.), eine GmbH, aber auch Gemeinden oder Stiftungen des öffentlichen Rechts." },
+            { q: "Monatspauschale", a: "Dies ist der monatliche Förderbetrag, der pro ehrenamtlich tätiger Person zur Verfügung steht. Die genaue Höhe (zwischen 35 € und 45 €) wird jedes Jahr vom Staatsministerium festgelegt und hängt vom gesamten Antragsvolumen und den verfügbaren Mitteln ab." },
+            { q: "Mittelanforderung", a: "Dies ist der formale Abruf der bewilligten Fördergelder. Sobald Ihr Vertrag von beiden Seiten unterschrieben und im Portal aktiviert ist, können Sie die Mittel digital bei uns anfordern." },
+            { q: "Nachmeldungen, Ummeldungen, Abmeldungen von Ehrenamtlichen", a: "Alle personellen Änderungen müssen über einen Änderungsantrag im Portal gemeldet werden. Nur so ist sichergestellt, dass die richtigen Personen eine Aufwandsentschädigung erhalten können. Nach dem 31.12. des Förderjahres sind keine Änderungen mehr möglich." },
+            { q: "Nutzerverwaltung", a: "Die Person mit dieser Rolle ist der Hauptverantwortliche für die Stammdaten Ihrer Organisation im Förderportal. Sie kann Adressdaten, Bankverbindungen und vertretungsberechtigte Personen ändern sowie neue Nutzer für die Organisation freigeben." },
+            { q: "Projektlaufzeit / Durchführungszeitraum", a: "Dies ist der Zeitraum, in dem Sie Ihr Projekt tatsächlich durchführen. Er kann vom **Bewilligungszeitraum** (immer das ganze Kalenderjahr) abweichen. Wenn Ihr Projekt zum Beispiel nur von Mai bis September läuft, ist das die Projektlaufzeit. Die Finanzen müssen aber trotzdem für das gesamte Kalenderjahr abgerechnet werden." },
+            { q: "Sachbericht", a: "Der Sachbericht ist Teil des Verwendungsnachweises. Darin beschreiben Sie, wie Sie Ihr Projekt umgesetzt haben und welche Erfolge es gab. Er wird gemeinsam mit dem Verwendungsnachweis digital im Portal eingereicht." },
+            { q: "Teilnehmermonate", a: "Dies ist die Berechnungsgrundlage für Ihre Fördersumme. Ein Beispiel: 10 Personen, die jeweils für 8 Monate gefördert werden, ergeben 80 Teilnehmermonate. Diese Zahl wird mit der Monatspauschale multipliziert, um die Gesamtfördersumme zu errechnen." },
+            { q: "Vereinsregisterauszug", a: "Dieses Dokument bestätigt die Rechtsfähigkeit Ihres Vereins und listet die offiziell vertretungsberechtigten Personen auf. Einen aktuellen Auszug erhalten Sie jederzeit kostenlos online unter handelsregister.de. Bitte laden Sie nur den \"Aktuellen Abdruck\" (AD) von dieser Seite im Portal hoch. Der Auszug sollte in der Regel nicht älter als 6 Monate sein." },
+            { q: "Verwendungsnachweis", a: "Dies ist der obligatorische Nachweis über die korrekte Verwendung der Fördermittel. Er besteht aus einem zahlenmäßigen Nachweis und dem Sachbericht und muss innerhalb von zwei Monaten nach Ende des Förderjahres digital eingereicht werden." },
+            { q: "Vorzeitiger Maßnahmebeginn", a: "Dies bedeutet, dass Sie mit Ihrem ehrenamtlichen Projekt bereits zu Beginn des Förderjahres starten können, auch wenn der Zuwendungsvertrag noch nicht bei Ihnen eingegangen ist. Aufgrund der Natur der Ehrenamtsprojekte wird dies vorausgesetzt und muss **nicht** gesondert beantragt werden. Eine verbindliche Förderzusage besteht jedoch erst mit dem rechtsgültigen Vertrag." },
+            { q: "Zuwendungsempfänger", a: "Das ist Ihre Organisation (z. B. Ihr Verein), die den Antrag gestellt hat, deren Antrag bewilligt wurde und an die die Fördermittel ausgezahlt werden." },
+            { q: "Zuwendungsvertrag", a: "Das ist der offizielle Vertrag, der die Förderung Ihres Antrags bestätigt. Darin sind alle wichtigen Details wie Fördersumme, Laufzeit und Auszahlungsmodalitäten geregelt. Sie erhalten ihn nach der Genehmigung Ihres Antrags digital im Förderportal." }
+        ]
+    }
+];
+
+const AccordionItem = ({ question, answer, isOpen, onClick, searchTerm }) => {
+    // Simple markdown-to-html for bold and lists
+    const formatAnswer = (text) => {
+        let html = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
+            .replace(/\n- (.*?)/g, '<li>$1</li>') // List items
+            .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>') // Wrap lists
+            .replace(/\n/g, '<br />'); // Newlines
+        return { __html: html };
+    };
+
+    return (
+        <div className="border-b border-gray-200">
+            <button
+                onClick={onClick}
+                className="w-full flex justify-between items-center text-left py-4 px-1 text-lg font-semibold text-gray-800 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+                <Highlight text={question} highlight={searchTerm} />
+                <svg
+                    className={`w-6 h-6 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </button>
+            <div
+                className={`overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? 'max-h-screen' : 'max-h-0'}`}
+            >
+                <div className="p-4 pt-0 text-gray-600 leading-relaxed" dangerouslySetInnerHTML={formatAnswer(answer)} />
+            </div>
+        </div>
+    );
+};
+
+
+export default function App() {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [openQuestion, setOpenQuestion] = useState({});
+
+    const handleToggle = (catIndex, qIndex) => {
+        const key = `${catIndex}-${qIndex}`;
+        setOpenQuestion(prev => ({ [key]: !prev[key] }));
+    };
+
+    const filteredData = useMemo(() => {
+        if (!searchTerm.trim()) {
+            return faqData;
+        }
+        const lowercasedFilter = searchTerm.toLowerCase();
+        return faqData
+            .map(category => {
+                const filteredQuestions = category.questions.filter(
+                    q =>
+                        q.q.toLowerCase().includes(lowercasedFilter) ||
+                        q.a.toLowerCase().includes(lowercasedFilter)
+                );
+                if (filteredQuestions.length > 0 || category.title.toLowerCase().includes(lowercasedFilter)) {
+                    return { ...category, questions: filteredQuestions.length > 0 ? filteredQuestions : category.questions };
+                }
+                return null;
+            })
+            .filter(Boolean);
+    }, [searchTerm]);
+
+    return (
+        <div className="min-h-screen bg-gray-100 font-sans">
+            <header className="bg-white shadow-md sticky top-0 z-10">
+                <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+                    <div className="flex items-center space-x-4">
+                         <img src="https://www.wfs-foerderportal.de/static/b93128f7b58055375908.svg" alt="Wir für Sachsen Logo" className="h-12" />
+                        <h1 className="text-2xl font-bold text-gray-800 hidden sm:block">Hilfe & FAQ</h1>
+                    </div>
+                    <div className="w-full max-w-md">
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Suchen Sie nach einem Thema..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full py-2 pl-10 pr-4 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main className="container mx-auto p-4 md:p-8">
+                <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+                    {filteredData.length > 0 ? (
+                        filteredData.map((category, catIndex) => (
+                            <div key={catIndex} className="mb-10">
+                                <h2 className="text-3xl font-bold text-blue-800 mb-6 border-b-2 border-blue-200 pb-2">
+                                    <Highlight text={category.title} highlight={searchTerm} />
+                                </h2>
+                                {category.questions.map((item, qIndex) => (
+                                    <AccordionItem
+                                        key={qIndex}
+                                        question={item.q}
+                                        answer={item.a}
+                                        isOpen={openQuestion[`${catIndex}-${qIndex}`]}
+                                        onClick={() => handleToggle(catIndex, qIndex)}
+                                        searchTerm={searchTerm}
+                                    />
+                                ))}
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-center py-16">
+                            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                            </svg>
+                            <h3 className="mt-2 text-lg font-medium text-gray-900">Keine Ergebnisse gefunden</h3>
+                            <p className="mt-1 text-sm text-gray-500">
+                                Für Ihre Suche nach "{searchTerm}" konnten wir leider keine passenden FAQs finden.
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </main>
+            
+            <footer className="text-center py-6 text-gray-500 text-sm">
+                <p>© 2024 Bürgerstiftung Dresden - FAQ Portal</p>
+            </footer>
+        </div>
+    );
+}
